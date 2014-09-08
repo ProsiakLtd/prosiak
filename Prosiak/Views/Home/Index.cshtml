@@ -1,0 +1,37 @@
+﻿@model Prosiak.ViewModels.HomeViewModel
+@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="jumbotron">
+    <h1>Prosiak</h1>
+    <p class="lead">Welcome to <strong>Pro</strong>fessional <strong>Si</strong>te of our company.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <h2>Entertainment section</h2>
+        <p>
+            Get information about movies we watch, books we read or music we listen to.
+        </p>
+
+        <p><a href="@Url.Action("Index", "Movies", new { Area = "Movies" })">Movies &raquo;</a></p>
+        <p><a href="@Url.Action("Index", "Books", new { Area = "Books" })">Books &raquo;</a></p>
+        <p><a href="@Url.Action("Index", "Spotify", new { Area = "Spotify" })">Spotify &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Let Office girls know what needs to be bought</h2>
+        <p>Do you need anything in particular, like pen, notebook or a new brand of tea you would like to drink at work? </p>
+        <p>Let us know here...</p>
+        <p><a class="btn btn-default" href="@Url.Action("Index", "Shopping", new { Area = "Shopping" })">Click here &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Register your working time with us to make Dobrusia's life easy</h2>
+        <p>You can simplify your day by using simple and efficient time booking system.</p>
+        <p><a class="btn btn-default" href="@Url.Action("Index", "Time", new { Area = "Time" })">Click here &raquo;</a></p>
+    </div>
+</div>
+<div class="row">
+    <p>&nbsp;</p>
+    <p> Number of Visitors: <strong>@Model.NumberOfVisitors</strong>, last visitor: <strong>@Model.LastVisitor</strong> at <strong>@Model.LastVisitDate.ToString("HH:mm:ss dd.MM.yyyy")</strong></p>
+</div>
