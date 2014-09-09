@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using Ninject.Web.Common;
 
 namespace Prosiak.DataAccessLayer
 {
@@ -10,7 +11,8 @@ namespace Prosiak.DataAccessLayer
     {
         public override void Load()
         {
-            //Bind<IVisitorsManagerService>().To<VisitorsManagerService>().InSingletonScope();
+            Bind<DatabaseContext>().ToSelf().InRequestScope(); //it's going to be disposed once  http request is completed
+            Bind<IDatabaseOperations>().To<DatabaseOperations>();
         }
     }
 }

@@ -4,9 +4,9 @@ using System.Data.Entity;
 using System.Linq;
 using System.Web;
 
-namespace Prosiak.Models
+namespace Prosiak.DataAccessLayer
 {
-    public class DatabaseContext : DbContext
+    class DatabaseContext : DbContext
     {
         // You can add custom code to this file. Changes will not be overwritten.
         // 
@@ -15,7 +15,8 @@ namespace Prosiak.Models
         // For more information refer to the documentation:
         // http://msdn.microsoft.com/en-us/data/jj591621.aspx
     
-        public DatabaseContext() : base("database")
+        public DatabaseContext() 
+            : base("database")
         {
         }    
     }
