@@ -1,7 +1,96 @@
-﻿
+﻿@model  IEnumerable<IEnumerable<Prosiak.Areas.Books.Book>>
+
 @{
-    ViewBag.Title = "Books";
+    ViewBag.Title = "Index";
+}
+@using Prosiak.Areas.Books.Helpers
+
+<h2>Index</h2>
+<p>
+    @Html.ActionLink("Create New", "Create")
+    
+    @using (Html.BeginForm("Index","Books",FormMethod.Get)){ 
+           
+         <p>
+             Category: @Html.DropDownList("bookCategory", "All")
+             Author or Title: @Html.TextBox("searchString")
+             Number of results: @Html.DropDownList("showNum","All") <br />   
+         <input type="submit" value="Filter" style="background: #E1D58D"/></p> 
+        } 
+</p>
+<p>
+   
+        @for (int i = 1; i <= Model.ToList().Count(); i++)
+        {
+            @Html.ActionLink(i.ToString(), "", new { resPage = i, showNum = ViewBag.selectedShowNum });
+        }
+    
+</p>
+<table class="table">
+    <tr>
+        <!--th /-->
+        <th><!-- I am not proud of this... -->
+            @Html.DisplayNameFor(model => (model.First()).First().Title) 
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => (model.First()).First().Author)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => (model.First()).First().Category)
+        </th>
+        <th />
+        <th />
+    </tr>
+
+
+@foreach (var item in (Model.ToArray())[(int)ViewBag.resPage]){
+    
+//foreach (var item in group) {
+    <tr>
+        <!--this is where Eye Candy happens-->
+        <!--and by Eye I mean 403 errors and by Candy I mean horrible lag-->
+        @*<th>
+            @if (!string.IsNullOrEmpty(item.Isbn))
+            {
+                
+                <img src="@Html.GetThumbnailFromISBN(item.Isbn as string)" />
+            }
+        </th>*@
+        
+        <td>
+            @Html.DisplayFor(modelItem => item.Title)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Author)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Category)
+        </td>
+        <td>
+            @Html.ActionLink("Details", "Details", new { id=item.ID })
+        </td>
+        <td>
+                @if (string.IsNullOrEmpty(item.Reader)){   
+                using (Html.BeginForm(new { Bookid = item.ID, Return = 0 }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="submit" value="Borrow" style="background: #B1CF82;" /> 
+                }
+            }
+            else if (item.Reader == User.Identity.Name)
+            {
+                using (Html.BeginForm(new { Bookid = item.ID, Return = 1 }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="submit" value="Return" style="background: #876095" />
+                }
+            }
+        </td>
+
+    </tr>
+    
+    
+//}
 }
 
-<h2>Books</h2>
-
+</table>
