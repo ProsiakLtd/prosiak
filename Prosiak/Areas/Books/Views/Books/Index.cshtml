@@ -8,16 +8,33 @@
 <h2>Index</h2>
 <p>
     @Html.ActionLink("Create New", "Create")
-    
-    @using (Html.BeginForm("Index","Books",FormMethod.Get)){ 
-           
-         <p>
-             Category: @Html.DropDownList("bookCategory", "All")
-             Author or Title: @Html.TextBox("searchString")
-             Number of results: @Html.DropDownList("showNum","All") <br />   
-         <input type="submit" value="Filter" style="background: #E1D58D"/></p> 
-        } 
-</p>
+   
+             @using (Html.BeginForm("Index", "Books", FormMethod.Get, new { @class = "form-inline", role = "form" }))
+             {
+                <div class="form-group">
+                    @Html.Label("Category: ", new { @class = "control-label" })
+                    <select class="form-control input-sm" id="bookCategory" name="bookCategory">
+                        <option value="All" selected>All</option>
+                        @foreach (SelectListItem item in ViewBag.bookCategory)
+                        {
+                            <option>@item.Text</option>
+                        }
+                    </select>
+
+                    @Html.TextBox("searchString", null, new { @class = "form-control input-sm", placeholder = "Autor lub tytuł..." })
+
+                    @Html.Label("Number of results: ", new { @class = "control-label" })
+                    <select class="form-control input-sm" id="showNum" name="showNum">
+                        <option value="All" selected>All</option>
+                        @foreach (SelectListItem item in ViewBag.showNum)
+                        {
+                            <option>@item.Text</option>
+                        }
+                    </select>
+                    <input type="submit" value="Filter" class="btn btn-default btn-sm" />
+                </div>
+             }
+</p> 
 <p>
    
         @for (int i = 1; i <= Model.ToList().Count(); i++)
@@ -74,17 +91,21 @@
                 using (Html.BeginForm(new { Bookid = item.ID, Return = 0 }))
                 {
                     @Html.AntiForgeryToken()
-                    <input type="submit" value="Borrow" style="background: #B1CF82;" /> 
+                    <input type="submit" value="Borrow" class="btn btn-default btn-sm" />
                 }
-            }
-            else if (item.Reader == User.Identity.Name)
-            {
-                using (Html.BeginForm(new { Bookid = item.ID, Return = 1 }))
+                }
+                else if (item.Reader == User.Identity.Name)
                 {
+                    using (Html.BeginForm(new { Bookid = item.ID, Return = 1 }))
+                    {
                     @Html.AntiForgeryToken()
-                    <input type="submit" value="Return" style="background: #876095" />
+                    <input type="submit" value="Return" class="btn btn-default btn-sm" />
+                    }
                 }
-            }
+                else
+                {
+                    <p>Wypożyczone przez: <strong>@item.Reader</strong></p>
+                }
         </td>
 
     </tr>
