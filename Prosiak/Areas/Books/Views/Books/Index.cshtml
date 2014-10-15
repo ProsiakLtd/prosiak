@@ -1,9 +1,12 @@
-﻿@model  IEnumerable<IEnumerable<Prosiak.Areas.Books.Book>>
+﻿@model  Prosiak.Areas.Books.IndexDataContainer
 
 @{
     ViewBag.Title = "Index";
 }
 @using Prosiak.Areas.Books.Helpers
+@using PagedList.Mvc; //import this so we get our HTML Helper
+@using PagedList; //import this so we can cast our list to IPagedList (only necessary because ViewBag is dynamic)
+
 
 <h2>Index</h2>
 <p>
@@ -14,10 +17,17 @@
                 <div class="form-group">
                     @Html.Label("Category: ", new { @class = "control-label" })
                     <select class="form-control input-sm" id="bookCategory" name="bookCategory">
-                        <option value="All" selected>All</option>
+                        <option>All</option>
                         @foreach (SelectListItem item in ViewBag.bookCategory)
                         {
-                            <option>@item.Text</option>
+                            if (@item.Text == Model.Category)
+                            {
+                                <option value="@item.Text" selected>@item.Text</option>
+                            }
+                            else
+                            {
+                               <option>@item.Text</option> 
+                            }
                         }
                     </select>
 
@@ -25,42 +35,51 @@
 
                     @Html.Label("Number of results: ", new { @class = "control-label" })
                     <select class="form-control input-sm" id="showNum" name="showNum">
-                        <option value="All" selected>All</option>
                         @foreach (SelectListItem item in ViewBag.showNum)
                         {
-                            <option>@item.Text</option>
+                            if (@item.Text == Model.ChunkSize.ToString())
+                            {
+                                <option value="@item.Text" selected>@item.Text</option>
+                            }
+                            else
+                            {
+                               <option>@item.Text</option> 
+                            }
                         }
                     </select>
                     <input type="submit" value="Filter" class="btn btn-default btn-sm" />
                 </div>
              }
 </p> 
-<p>
-   
-        @for (int i = 1; i <= Model.ToList().Count(); i++)
-        {
-            @Html.ActionLink(i.ToString(), "", new { resPage = i, showNum = ViewBag.selectedShowNum });
-        }
-    
-</p>
+
+<!-- output a paging control that lets the user navigation to the previous page, next page, etc -->
+@Html.PagedListPager( (IPagedList)Model.Books, page => Url.Action("Index", new 
+{ 
+    resPage=page,
+    bookCategory=Model.Category,
+    searchString=Model.SearchString,
+    showNum = Model.ChunkSize
+}) )
+
 <table class="table">
     <tr>
         <!--th /-->
         <th><!-- I am not proud of this... -->
-            @Html.DisplayNameFor(model => (model.First()).First().Title) 
+            @Html.DisplayNameFor(model => (model.Books.First()).Title) 
         </th>
         <th>
-            @Html.DisplayNameFor(model => (model.First()).First().Author)
+            @Html.DisplayNameFor(model => (model.Books.First()).Author)
         </th>
         <th>
-            @Html.DisplayNameFor(model => (model.First()).First().Category)
+            @Html.DisplayNameFor(model => (model.Books.First()).Category)
         </th>
         <th />
         <th />
     </tr>
 
 
-@foreach (var item in (Model.ToArray())[(int)ViewBag.resPage]){
+@foreach (var item in Model.Books)
+{
     
 //foreach (var item in group) {
     <tr>
@@ -88,7 +107,15 @@
         </td>
         <td>
                 @if (string.IsNullOrEmpty(item.Reader)){   
-                using (Html.BeginForm(new { Bookid = item.ID, Return = 0 }))
+                using (Html.BeginForm(new 
+                { 
+                    Bookid = item.ID,
+                    ReturnInd = 0,
+                    resPage = Model.PageNum,
+                    bookCategory = Model.Category,
+                    searchString = Model.SearchString,
+                    showNum = Model.ChunkSize
+                }))
                 {
                     @Html.AntiForgeryToken()
                     <input type="submit" value="Borrow" class="btn btn-default btn-sm" />
@@ -96,7 +123,15 @@
                 }
                 else if (item.Reader == User.Identity.Name)
                 {
-                    using (Html.BeginForm(new { Bookid = item.ID, Return = 1 }))
+                    using (Html.BeginForm((new 
+                { 
+                    Bookid = item.ID,
+                    ReturnInd = 1,
+                    resPage = Model.PageNum,
+                    bookCategory = Model.Category,
+                    searchString = Model.SearchString,
+                    showNum = Model.ChunkSize
+                })))
                     {
                     @Html.AntiForgeryToken()
                     <input type="submit" value="Return" class="btn btn-default btn-sm" />

@@ -137,6 +137,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\NinjectWebCommon.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Areas\Books\Models\IndexDataContainer.cs" />
     <Compile Include="Areas\Books\Helpers\HtmlHelpers.cs" />
     <Compile Include="Areas\Books\Models\Book.cs" />
     <Compile Include="Areas\Books\BooksAreaRegistration.cs" />
