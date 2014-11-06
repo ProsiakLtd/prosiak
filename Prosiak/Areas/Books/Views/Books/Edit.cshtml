@@ -3,6 +3,7 @@
 @{
     ViewBag.Title = "Edit";
 }
+@using Prosiak.Areas.Books.Helpers
 
 <h2>Edit</h2>
 
@@ -13,6 +14,7 @@
     
     <div class="form-horizontal">
         <h4>Book</h4>
+        <img src="@Url.Content(Html.ThumbnailPath(Model.Isbn))" />
         <hr />
         @Html.ValidationSummary(true)
         @Html.HiddenFor(model => model.ID)
@@ -73,10 +75,11 @@
     </div>
 }
 
+@using (Html.BeginForm("FetchThumbnail", "Books", new { bookId = Model.ID }, FormMethod.Post))
+{
+    <input type="submit" value="Fetch Thumbnail" class="btn btn-default btn-sm" data-prosiak-fetch="@Model.Isbn" />
+}
+
 <div>
     @Html.ActionLink("Back to List", "Index")
 </div>
-
-@section Scripts {
-    @Scripts.Render("~/bundles/jqueryval")
-}

@@ -3,11 +3,13 @@
 @{
     ViewBag.Title = "Details";
 }
+@using Prosiak.Areas.Books.Helpers
 
 <h2>Details</h2>
 
 <div>
     <h4>Book</h4>
+    <img src="@Url.Content(Html.ThumbnailPath(Model.Isbn))" />
 	<hr />
     <dl class="dl-horizontal">
         <dt>

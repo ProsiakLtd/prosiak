@@ -1,0 +1,82 @@
+﻿@model  Prosiak.Areas.Books.IndexViewModel
+@using PagedList.Mvc
+@using PagedList
+@using Prosiak.Areas.Books.Helpers
+
+<div id="listOfBooks">
+
+   
+
+    <div class="pagedList" data-prosiak-target="#listOfBooks">
+        @Html.PagedListPager((IPagedList)Model.Books, page => Url.Action("Index", new
+{
+    Page = page,
+    Category = Model.Category,
+    SearchString = Model.SearchString,
+    ResultsPerPage = Model.ResultsPerPage
+}), PagedListRenderOptions.ClassicPlusFirstAndLast)
+    </div>
+
+    <table class="table">
+        <tr>
+            <th />
+            <th>
+                <!-- I am not proud of this... -->
+                @Html.DisplayNameFor(model => (model.Books.First()).Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => (model.Books.First()).Author)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => (model.Books.First()).Category)
+            </th>
+            <th />
+            <th style="width: 150px;" />
+        </tr>
+
+
+        @foreach (var item in Model.Books)
+        {
+
+            //foreach (var item in group) {
+            <tr>
+                <!--because of reasons, the button to fetch image is currently present only on edit screen-->
+                <th>
+                    <img src="@Url.Content(Html.ThumbnailPath(item.Isbn))" />
+                </th>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.Title)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Author)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Category)
+                </td>
+                <td>
+                    @Html.ActionLink("Details", "Details", new { id = item.ID })
+                </td>
+                <td>
+                    @using (Html.BeginForm(
+                        new { bookId = item.ID,
+                        category = Model.Category,
+                        searchString = Model.SearchString,
+                        resultsPerPage = Model.ResultsPerPage,
+                        page = Model.Page
+                        }
+                        ))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.BorrowButton(item.ID, item.Reader)
+
+                    }
+                </td>
+
+            </tr>
+    
+    
+            //}
+        }
+    </table>
+</div>

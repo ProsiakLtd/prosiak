@@ -8,6 +8,9 @@
     using System.Web;
     using System.Web.Mvc;
     using PagedList;
+    using Areas.Books.Helpers;
+    
+    using System.IO;
 
     /// <summary>
     /// Controller for Book Area
@@ -17,145 +20,96 @@
         private BooksDBContext db = new BooksDBContext();
         //private IEnumerable<IEnumerable<Book>> booksGrouped;
 
+        public ActionResult Autocomplete(string term)
+        {
+            var model = db.Books
+                .Where(b => b.Title.ToLower().StartsWith(term.ToLower()))
+                .DistinctBy(t => t.Title)
+                .Select(s => s.Title)
+                .Union(db.Books
+                    .Where(b => b.Author.StartsWith(term.ToLower()))
+                    .DistinctBy(t => t.Author)
+                    .Select(s => s.Author)
+                )
+                .OrderBy(s=>s)
+                .Select(hint=>new { label = hint });
+
+            return Json(model, JsonRequestBehavior.AllowGet);
+        }
+
         // GET: /Books/
-        public ActionResult Index(string bookCategory, string searchString, string showNum, int? resPage)
+        public ActionResult Index(string category, string searchString, int resultsPerPage = 10, int page = 1)
         {
             db.Database.CreateIfNotExists();
-            var categoryList = new List<string>();
+            
+            var books = db.Books.Where(b=>b.Status == true).ToList();
 
-            var categoryQuery = from d in db.Books
-                                orderby d.Category
-                                select d.Category;
-            categoryList.AddRange(categoryQuery.Distinct());
-            ViewBag.bookCategory = new SelectList(categoryList);
-            ViewBag.showNum = new SelectList(new List<string> { "10", "20", "50" });
-            ViewBag.selectedShowNum = showNum;
-            ViewBag.resPage = resPage != null ? resPage - 1 : 0;
-            var books = from b in db.Books
-                        where b.Status == true
-                        select b;
+            var model = BuildIndexViewModel(category, searchString, resultsPerPage, page, books);
 
-            var booksList = (IEnumerable<Book>)books.ToList();
-
-            if (!String.IsNullOrEmpty(searchString))
+            if (Request.IsAjaxRequest())
             {
-                booksList = booksList.Where(b => b.Title.Contains(searchString) || b.Author.Contains(searchString));
+                return PartialView("_Books", model);
             }
 
-            if (!(String.IsNullOrEmpty(bookCategory) || bookCategory == "All"))
-            {
-                booksList = booksList.Where(b => b.Category == bookCategory);
-            }
-
-
-            var pagedBooks = booksList.ToPagedList(resPage ?? 1, int.Parse(showNum ?? "10"));
-            IndexDataContainer model = new IndexDataContainer()
-            {
-                Category = bookCategory,
-                SearchString = searchString,
-                PageNum = resPage ?? 1,
-                ChunkSize = showNum==null ? 10 : int.Parse(showNum),
-                Books = pagedBooks
-            };
             return View(model);
         }
 
         /// <summary>
-        /// Post method for borrowing/returning
+        /// This either borrows or returns the book
         /// </summary>
-        /// <param name="bookid"></param>
-        /// <param name="returnInd">1 if book is returned 0 if book is borrowed</param>
+        /// <param name="bookId"></param>
         /// <returns></returns>
-        [ValidateAntiForgeryToken]
         [HttpPost]
-        public ActionResult Index(int? bookid, int? returnInd, string bookCategory, string searchString, string showNum, int? resPage)
+        [ValidateAntiForgeryToken]
+        public ActionResult Index(int bookId, string category, string searchString, int resultsPerPage = 10, int page = 1)
         {
-            //this is required?
-            var categoryList = new List<string>();
+            var book = db.Books.Single(b => b.ID == bookId);
+            BookCard bc;
+            bool conflict = false;
 
-            var categoryQuery = from d in db.Books
-                                orderby d.Category
-                                select d.Category;
-            categoryList.AddRange(categoryQuery.Distinct());
-            ViewBag.bookCategory = new SelectList(categoryList);
-            ViewBag.showNum = new SelectList(new List<string> { "10", "20", "50" });
-            var books = from b in db.Books
-                        where b.Status == true
-                        select b;
-
-            var booksList = (IEnumerable<Book>)books.ToList();
-
-            if (!String.IsNullOrEmpty(searchString))
+            //no one is reading it? borrow!
+            if (book.Reader == null){
+                    bc = new BookCard
+                    {
+                        BookID = bookId,
+                        BorrowDate = DateTime.Now,
+                        Reader = User.Identity.Name
+                    }; 
+                    book.Reader = User.Identity.Name;
+                    db.Cards.Add(bc);
+                    db.Entry(book).State = EntityState.Modified;
+            }
+            //user is the reader? return!
+            else if (book.Reader == User.Identity.Name)
             {
-                booksList = booksList.Where(b => b.Title.Contains(searchString) || b.Author.Contains(searchString));
+                bc = db.Cards.Single(c=>c.BookID == bookId && c.ReturnDate == null);
+
+                bc.ReturnDate = DateTime.Now;
+                book.Reader = null;
+                db.Entry(bc).State = EntityState.Modified;
+                db.Entry(book).State = EntityState.Modified;
+            } 
+            else //this will probably only happen if the book was borrowed by someone else 
+                //after the page was loaded but before the button click
+            {
+                conflict = true;
             }
 
-            if (!(String.IsNullOrEmpty(bookCategory) || bookCategory == "All"))
+            db.SaveChanges();
+
+            if (Request.IsAjaxRequest())
             {
-                booksList = booksList.Where(b => b.Category == bookCategory);
+                return Content((HtmlHelpers.GetButton(bookId, book.Reader, User.Identity.Name, conflict)).ToHtmlString());
             }
 
-            var pagedBooks = booksList.ToPagedList(resPage ?? 1, int.Parse(showNum ?? "10"));
-            IndexDataContainer model = new IndexDataContainer()
-            {
-                Category = bookCategory,
-                SearchString = searchString,
-                PageNum = resPage ?? 1,
-                ChunkSize = showNum == null ? 10 : int.Parse(showNum),
-                Books = pagedBooks
-            };
+            var books = db.Books.Where(b => b.Status == true).ToList();
 
-
-            if (ModelState.IsValid && bookid != null && returnInd != null)
-            {
-                BookCard bc;
-                Book b = (from d in db.Books
-                          where d.ID == bookid
-                          select d).First();
-
-                b.Timestamp = DateTime.Now; //should I update this?
-                b.UsrStamp = User.Identity.Name; //-||-
-
-                switch (returnInd)
-                {
-                    case 0://borrow
-                        bc = new BookCard
-                        {
-                            BookID = (int)bookid,
-                            BorrowDate = DateTime.Now,
-                            Reader = User.Identity.Name
-                        }; //CAST!!!
-                        b.Reader = User.Identity.Name;
-                        db.Cards.Add(bc);
-                        break;
-                    case 1: //return
-                        bc = (from c in db.Cards
-                              where c.BookID == bookid && c.ReturnDate == null
-
-                              select c).First();
-                        bc.ReturnDate = DateTime.Now;
-                        b.Reader = null;
-                        db.Entry(bc).State = EntityState.Modified;
-                        break;
-                }
-
-                db.Entry(b).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index", new
-                {
-                    resPage = model.PageNum,
-                    bookCategory = model.Category,
-                    searchString = model.SearchString,
-                    showNum = model.ChunkSize
-                }
-                );
-
-                //return RedirectToAction("Index", new { bookCategory = this.bookCategory, searchString = searchString, showNum = showNum, resPage = resPage });
-            }
-   
-            //below should never ever ever happen?
+            var model = BuildIndexViewModel(category, searchString, resultsPerPage, page, books);
+            
             return View(model);
         }
+
+        
 
         // GET: /Books/Details/5
         public ActionResult Details(int? id)
@@ -235,6 +189,30 @@
             return View(book);
         }
 
+        [HttpPost]
+        public ActionResult FetchThumbnail(int bookId)
+        {
+            var book = db.Books.Single(b => b.ID == bookId);
+            var thumbnailPath = Helpers.Thumbnails.GetThumbnailDiskPath(book.Isbn);
+            if (System.IO.File.Exists(thumbnailPath))
+            {
+                return RedirectToAction("Edit", new { id = bookId });
+            }
+            else
+            {
+                string thumbnailUrl = Helpers.Thumbnails.TryGetThumbnailFromGoogle(book.Isbn);
+                if (!string.IsNullOrEmpty(thumbnailUrl))
+                {
+                    using (WebClient wc = new WebClient())
+                    {
+                        wc.DownloadFile(thumbnailUrl, thumbnailPath);
+                    }
+                }
+                return RedirectToAction("Edit", new { id = bookId });
+            }
+            //return RedirectToAction("Edit", new { id = bookId });
+        }
+
         // GET: /Books/Delete/5
         public ActionResult Delete(int? id)
         {
@@ -272,5 +250,30 @@
 
             base.Dispose(disposing);
         }
+
+        private IndexViewModel BuildIndexViewModel(string category, string searchString, int resultsPerPage, int page, IEnumerable<Book> books)
+        {
+            var categoryList = new List<string>();
+            categoryList.AddRange(books.OrderBy(b=>b.Category).Select(b=>b.Category).Distinct());
+
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                books = books.Where(b => b.Title.Contains(searchString) || b.Author.Contains(searchString));
+            }
+
+            if (!(String.IsNullOrEmpty(category) || category == "All"))
+            {
+                books = books.Where(b => b.Category == category);
+            }
+
+            var pagedBooks = books.ToPagedList(page, resultsPerPage);
+
+            IndexViewModel model = new IndexViewModel(page, resultsPerPage, category, searchString, pagedBooks);
+            model.ResultsPerPageOptions = new SelectList(new List<string> { "10", "20", "50" });
+            model.Categories = new SelectList(categoryList);
+
+            return model;
+        }
+       
     }
 }

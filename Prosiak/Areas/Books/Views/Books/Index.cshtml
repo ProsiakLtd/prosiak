@@ -1,152 +1,44 @@
-﻿@model  Prosiak.Areas.Books.IndexDataContainer
+﻿@model  Prosiak.Areas.Books.IndexViewModel
 
 @{
     ViewBag.Title = "Index";
 }
-@using Prosiak.Areas.Books.Helpers
-@using PagedList.Mvc; //import this so we get our HTML Helper
-@using PagedList; //import this so we can cast our list to IPagedList (only necessary because ViewBag is dynamic)
+
 
 
 <h2>Index</h2>
-<p>
     @Html.ActionLink("Create New", "Create")
+    <br />
+    @using(Ajax.BeginForm( 
+        actionName: null, 
+        routeValues: null,
+        ajaxOptions: new AjaxOptions{
+                        HttpMethod = "get",
+                        InsertionMode=InsertionMode.Replace,
+                        UpdateTargetId="listOfBooks"},
+        htmlAttributes: new {@class = "form-inline", role = "form"}))
+    {
+        <div class="form-group">
+            <input type="search" class="form-control input-sm" name="searchString" placeholder="Author or Title" data-prosiak-autocomplete="@Url.Action("Autocomplete")" />
+             @Html.Label("Category: ", new { @class = "control-label" })
+            <select class="form-control input-sm" id="BookCategories" name="category">
+                <option>All</option>
+                @foreach (SelectListItem item in Model.Categories)
+                {
+                    <option>@item.Text</option> 
+                }
+            </select>
+            @Html.Label("Number of results: ", new { @class = "control-label" })
+            <select class="form-control input-sm" id="ResultsPerPageOptions" name="resultsPerPage">
+                @foreach (SelectListItem item in Model.ResultsPerPageOptions)
+                {
+                    <option>@item.Text</option> 
+                }
+            </select>
+           <input type="submit" value="Filter" class="btn btn-default btn-sm" />
+        </div>
+    }
    
-             @using (Html.BeginForm("Index", "Books", FormMethod.Get, new { @class = "form-inline", role = "form" }))
-             {
-                <div class="form-group">
-                    @Html.Label("Category: ", new { @class = "control-label" })
-                    <select class="form-control input-sm" id="bookCategory" name="bookCategory">
-                        <option>All</option>
-                        @foreach (SelectListItem item in ViewBag.bookCategory)
-                        {
-                            if (@item.Text == Model.Category)
-                            {
-                                <option value="@item.Text" selected>@item.Text</option>
-                            }
-                            else
-                            {
-                               <option>@item.Text</option> 
-                            }
-                        }
-                    </select>
-
-                    @Html.TextBox("searchString", null, new { @class = "form-control input-sm", placeholder = "Autor lub tytuł..." })
-
-                    @Html.Label("Number of results: ", new { @class = "control-label" })
-                    <select class="form-control input-sm" id="showNum" name="showNum">
-                        @foreach (SelectListItem item in ViewBag.showNum)
-                        {
-                            if (@item.Text == Model.ChunkSize.ToString())
-                            {
-                                <option value="@item.Text" selected>@item.Text</option>
-                            }
-                            else
-                            {
-                               <option>@item.Text</option> 
-                            }
-                        }
-                    </select>
-                    <input type="submit" value="Filter" class="btn btn-default btn-sm" />
-                </div>
-             }
-</p> 
-
-<!-- output a paging control that lets the user navigation to the previous page, next page, etc -->
-@Html.PagedListPager( (IPagedList)Model.Books, page => Url.Action("Index", new 
-{ 
-    resPage=page,
-    bookCategory=Model.Category,
-    searchString=Model.SearchString,
-    showNum = Model.ChunkSize
-}) )
-
-<table class="table">
-    <tr>
-        <!--th /-->
-        <th><!-- I am not proud of this... -->
-            @Html.DisplayNameFor(model => (model.Books.First()).Title) 
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => (model.Books.First()).Author)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => (model.Books.First()).Category)
-        </th>
-        <th />
-        <th />
-    </tr>
 
 
-@foreach (var item in Model.Books)
-{
-    
-//foreach (var item in group) {
-    <tr>
-        <!--this is where Eye Candy happens-->
-        <!--and by Eye I mean 403 errors and by Candy I mean horrible lag-->
-        @*<th>
-            @if (!string.IsNullOrEmpty(item.Isbn))
-            {
-                
-                <img src="@Html.GetThumbnailFromISBN(item.Isbn as string)" />
-            }
-        </th>*@
-        
-        <td>
-            @Html.DisplayFor(modelItem => item.Title)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Author)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Category)
-        </td>
-        <td>
-            @Html.ActionLink("Details", "Details", new { id=item.ID })
-        </td>
-        <td>
-                @if (string.IsNullOrEmpty(item.Reader)){   
-                using (Html.BeginForm(new 
-                { 
-                    Bookid = item.ID,
-                    ReturnInd = 0,
-                    resPage = Model.PageNum,
-                    bookCategory = Model.Category,
-                    searchString = Model.SearchString,
-                    showNum = Model.ChunkSize
-                }))
-                {
-                    @Html.AntiForgeryToken()
-                    <input type="submit" value="Borrow" class="btn btn-default btn-sm" />
-                }
-                }
-                else if (item.Reader == User.Identity.Name)
-                {
-                    using (Html.BeginForm((new 
-                { 
-                    Bookid = item.ID,
-                    ReturnInd = 1,
-                    resPage = Model.PageNum,
-                    bookCategory = Model.Category,
-                    searchString = Model.SearchString,
-                    showNum = Model.ChunkSize
-                })))
-                    {
-                    @Html.AntiForgeryToken()
-                    <input type="submit" value="Return" class="btn btn-default btn-sm" />
-                    }
-                }
-                else
-                {
-                    <p>Wypożyczone przez: <strong>@item.Reader</strong></p>
-                }
-        </td>
-
-    </tr>
-    
-    
-//}
-}
-
-</table>
+@Html.Partial("_Books", Model)
