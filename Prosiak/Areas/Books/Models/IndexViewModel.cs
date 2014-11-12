@@ -13,7 +13,7 @@ namespace Prosiak.Areas.Books
         public string Category { get; set; }
         public string SearchString { get; set; }
         public IEnumerable<Book> Books { get; set; }
-        public SelectList Categories { get; set; }
+        public List<SelectListItem> Categories { get; set; }
         public SelectList ResultsPerPageOptions { get; set; }
 
         public IndexViewModel(int page, int resultsPerPage, string category, string searchString, IEnumerable<Book> books)

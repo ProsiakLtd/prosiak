@@ -1,0 +1,7 @@
+﻿@using Prosiak.Areas.Books.Models
+@using Prosiak.Areas.Books.Helpers
+@{
+    var categories = typeof(BookGenre).GetItems((int?)Model);
+
+ }
+@Html.DropDownList("",categories)

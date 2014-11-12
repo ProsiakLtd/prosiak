@@ -92,7 +92,7 @@ namespace Prosiak.Areas.Books.Helpers
                     parsedResponse.Items.First().VolumeInfo.ImageLinks.SmallThumbnail != null)
                     imageString = parsedResponse.Items.First().VolumeInfo.ImageLinks.SmallThumbnail;
             }
-            catch (Exception e) { }
+            catch (Exception) { /*what's that google? I can't hear you!*/ }
             return imageString;
         }
     }

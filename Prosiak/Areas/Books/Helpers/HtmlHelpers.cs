@@ -70,5 +70,22 @@ namespace Prosiak.Areas.Books.Helpers
             }
         }
 
+        public static IEnumerable<SelectListItem> GetItems(this Type enumType, int? selectedValue)
+        {
+            if (!typeof(Enum).IsAssignableFrom(enumType))
+            {
+                throw new ArgumentException();
+            }
+            var names = Enum.GetNames(enumType);
+            var values = Enum.GetValues(enumType).Cast<int>();
+
+            var items = names.Zip(values, (name,value) => 
+            new SelectListItem{ 
+                Text = name, 
+                Value = value.ToString(), 
+                Selected = value == selectedValue});
+            return items;
+        }
+
     }
 }

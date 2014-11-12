@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Data.Entity;
 using System.Linq;
 using System.Web;
+using Prosiak.Areas.Books.Models;
 
 namespace Prosiak.Areas.Books
 {
@@ -24,8 +25,7 @@ namespace Prosiak.Areas.Books
         public string Isbn { get; set; }
         //[RegularExpression(@"^[A-Z]+[a-zA-Z''-'\s]*$")]
         [Required]
-        [StringLength(30)]
-        public string Category { get; set; }
+        public BookGenre Category { get; set; }
         [Required]
         [StringLength(30)]
         public string Owner { get; set; }
@@ -53,9 +53,4 @@ namespace Prosiak.Areas.Books
 
     }
 
-    public class BooksDBContext : DbContext
-    {
-        public DbSet<Book> Books { get; set; }
-        public DbSet<BookCard> Cards { get; set; }
-    }
 }

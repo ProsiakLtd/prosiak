@@ -11,6 +11,8 @@
     using Areas.Books.Helpers;
     
     using System.IO;
+    using Prosiak.DataContexts;
+    using Prosiak.Areas.Books.Models;
 
     /// <summary>
     /// Controller for Book Area
@@ -40,8 +42,7 @@
         // GET: /Books/
         public ActionResult Index(string category, string searchString, int resultsPerPage = 10, int page = 1)
         {
-            db.Database.CreateIfNotExists();
-            
+           
             var books = db.Books.Where(b=>b.Status == true).ToList();
 
             var model = BuildIndexViewModel(category, searchString, resultsPerPage, page, books);
@@ -78,6 +79,7 @@
                     book.Reader = User.Identity.Name;
                     db.Cards.Add(bc);
                     db.Entry(book).State = EntityState.Modified;
+                
             }
             //user is the reader? return!
             else if (book.Reader == User.Identity.Name)
@@ -94,7 +96,6 @@
             {
                 conflict = true;
             }
-
             db.SaveChanges();
 
             if (Request.IsAjaxRequest())
@@ -253,9 +254,6 @@
 
         private IndexViewModel BuildIndexViewModel(string category, string searchString, int resultsPerPage, int page, IEnumerable<Book> books)
         {
-            var categoryList = new List<string>();
-            categoryList.AddRange(books.OrderBy(b=>b.Category).Select(b=>b.Category).Distinct());
-
             if (!String.IsNullOrEmpty(searchString))
             {
                 books = books.Where(b => b.Title.Contains(searchString) || b.Author.Contains(searchString));
@@ -263,14 +261,26 @@
 
             if (!(String.IsNullOrEmpty(category) || category == "All"))
             {
-                books = books.Where(b => b.Category == category);
+                books = books.Where(b => b.Category == (BookGenre)Enum.Parse(typeof(BookGenre), category));
             }
 
             var pagedBooks = books.ToPagedList(page, resultsPerPage);
 
             IndexViewModel model = new IndexViewModel(page, resultsPerPage, category, searchString, pagedBooks);
             model.ResultsPerPageOptions = new SelectList(new List<string> { "10", "20", "50" });
-            model.Categories = new SelectList(categoryList);
+
+            var Catnames = Enum.GetNames(typeof(BookGenre));
+            var Catvalues = Enum.GetValues(typeof(BookGenre)).Cast<int>();
+
+            var items = Catnames.Zip(Catvalues, (name, value) =>
+            new SelectListItem
+            {
+                Text = name,
+                Value = value.ToString(),
+                Selected = value == 1
+            });
+
+            model.Categories = items.ToList();
 
             return model;
         }

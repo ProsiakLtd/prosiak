@@ -137,7 +137,8 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\NinjectWebCommon.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
-    <Compile Include="Areas\Books\Models\IndexDataContainer.cs" />
+    <Compile Include="Areas\Books\Models\BookGenre.cs" />
+    <Compile Include="Areas\Books\Models\IndexViewModel.cs" />
     <Compile Include="Areas\Books\Helpers\HtmlHelpers.cs" />
     <Compile Include="Areas\Books\Models\Book.cs" />
     <Compile Include="Areas\Books\BooksAreaRegistration.cs" />
@@ -152,6 +153,12 @@
     <Compile Include="Areas\Time\Controllers\TimeController.cs" />
     <Compile Include="Areas\Time\TimeAreaRegistration.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="DataContexts\BooksDBContext.cs" />
+    <Compile Include="DataContexts\BooksMigrations\201411122244373_InitialCreate.cs" />
+    <Compile Include="DataContexts\BooksMigrations\201411122244373_InitialCreate.Designer.cs">
+      <DependentUpon>201411122244373_InitialCreate.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DataContexts\BooksMigrations\Configuration.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -159,10 +166,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="App_Data\prosiak.mdf" />
-    <Content Include="App_Data\prosiak_log.ldf">
-      <DependentUpon>prosiak.mdf</DependentUpon>
-    </Content>
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\PagedList.css" />
@@ -268,6 +271,7 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Shared\_menu.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\BookGenre.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -289,6 +293,11 @@
       <Project>{4ed197d9-fd5f-4597-9ee8-18176479336e}</Project>
       <Name>Prosiak.Services</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DataContexts\BooksMigrations\201411122244373_InitialCreate.resx">
+      <DependentUpon>201411122244373_InitialCreate.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
